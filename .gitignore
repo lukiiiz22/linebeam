@@ -147,3 +147,9 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Linebeam local build and extension artifacts
+.test-out/
+*.vsix
+.DS_Store
+Thumbs.db

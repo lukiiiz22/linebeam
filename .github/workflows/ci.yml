@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run package
+      - name: Packaged extension smoke test (minimum VS Code)
+        if: runner.os == 'Linux'
+        env:
+          VSCODE_TEST_VERSION: '1.96.0'
+        run: xvfb-run -a npm run test:package
+      - name: Packaged extension smoke test (current stable VS Code)
+        if: runner.os == 'Linux'
+        env:
+          VSCODE_TEST_VERSION: stable
+        run: xvfb-run -a npm run test:package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linebeam-vsix-${{ matrix.os }}
+          path: "*.vsix"

@@ -1,0 +1,246 @@
+{
+  "name": "linebeam",
+  "displayName": "Linebeam - Guided Diff Walkthroughs",
+  "description": "Key changes. Clear explanations. Understand agent-generated code through evidence-linked, native diff walkthroughs.",
+  "version": "0.1.2",
+  "publisher": "lukiiiz22",
+  "private": true,
+  "author": "Lucas Zhang <lukiiiz22@outlook.com>",
+  "license": "SEE LICENSE IN LICENSE",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lukiiiz22/linebeam.git"
+  },
+  "homepage": "https://github.com/lukiiiz22/linebeam#readme",
+  "bugs": {
+    "url": "https://github.com/lukiiiz22/linebeam/issues"
+  },
+  "engines": {
+    "vscode": "^1.96.0"
+  },
+  "categories": [
+    "AI",
+    "Other"
+  ],
+  "keywords": [
+    "diff",
+    "copilot",
+    "code review",
+    "walkthrough"
+  ],
+  "extensionKind": [
+    "workspace"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "Linebeam invokes local Git and sends explicitly scoped changes to a user-selected Copilot model."
+    },
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "The MVP requires one local Git repository in desktop VS Code."
+    }
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "linebeam.explainChanges",
+        "title": "Explain Changes",
+        "category": "Linebeam",
+        "icon": "$(sparkle)"
+      },
+      {
+        "command": "linebeam.chooseScope",
+        "title": "Choose Change Scope",
+        "category": "Linebeam",
+        "icon": "$(git-compare)"
+      },
+      {
+        "command": "linebeam.chooseModel",
+        "title": "Choose Copilot Model",
+        "category": "Linebeam"
+      },
+      {
+        "command": "linebeam.openWalkthrough",
+        "title": "Open Walkthrough",
+        "category": "Linebeam"
+      },
+      {
+        "command": "linebeam.previous",
+        "title": "Previous Step",
+        "category": "Linebeam",
+        "enablement": "linebeam.canGoPrevious",
+        "icon": "$(arrow-left)"
+      },
+      {
+        "command": "linebeam.next",
+        "title": "Next Step",
+        "category": "Linebeam",
+        "enablement": "linebeam.canGoNext",
+        "icon": "$(arrow-right)"
+      },
+      {
+        "command": "linebeam.showAllChanges",
+        "title": "Show All Changes",
+        "category": "Linebeam",
+        "icon": "$(list-tree)"
+      },
+      {
+        "command": "linebeam.showDemo",
+        "title": "Try the Offline Demo",
+        "category": "Linebeam"
+      },
+      {
+        "command": "linebeam.cancel",
+        "title": "Cancel Walkthrough Generation",
+        "category": "Linebeam"
+      },
+      {
+        "command": "linebeam.clear",
+        "title": "Clear Walkthrough",
+        "category": "Linebeam"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "linebeam",
+          "title": "Linebeam",
+          "icon": "media/linebeam.svg"
+        }
+      ]
+    },
+    "views": {
+      "linebeam": [
+        {
+          "id": "linebeam.walkthrough",
+          "name": "Walkthrough",
+          "type": "webview",
+          "contextualTitle": "Linebeam"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "linebeam.explainChanges",
+          "when": "view == linebeam.walkthrough",
+          "group": "navigation@1"
+        },
+        {
+          "command": "linebeam.chooseScope",
+          "when": "view == linebeam.walkthrough",
+          "group": "navigation@2"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "linebeam.previous",
+          "when": "resourceScheme == diffquill && linebeam.hasPlan",
+          "group": "navigation@1"
+        },
+        {
+          "command": "linebeam.next",
+          "when": "resourceScheme == diffquill && linebeam.hasPlan",
+          "group": "navigation@2"
+        },
+        {
+          "command": "linebeam.showAllChanges",
+          "when": "resourceScheme == diffquill",
+          "group": "navigation@3"
+        }
+      ]
+    },
+    "colors": [
+      {
+        "id": "linebeam.highlightBackground",
+        "description": "Background of the code ranges referenced by the current Linebeam step.",
+        "defaults": {
+          "dark": "#D9B65B24",
+          "light": "#9B710D20",
+          "highContrast": "#FFFFFF18",
+          "highContrastLight": "#00000018"
+        }
+      },
+      {
+        "id": "linebeam.highlightBorder",
+        "description": "Border of the code ranges referenced by the current Linebeam step.",
+        "defaults": {
+          "dark": "#D9B65B",
+          "light": "#936400",
+          "highContrast": "#FFFFFF",
+          "highContrastLight": "#000000"
+        }
+      }
+    ],
+    "configuration": {
+      "title": "Linebeam",
+      "properties": {
+        "linebeam.defaultScope": {
+          "type": "string",
+          "enum": [
+            "all",
+            "staged",
+            "unstaged"
+          ],
+          "enumDescriptions": [
+            "HEAD to saved working tree, including non-ignored untracked files.",
+            "HEAD to the Git index only.",
+            "Git index to saved working tree, including non-ignored untracked files."
+          ],
+          "default": "all",
+          "description": "Initial comparison scope. Unsaved buffers are never captured."
+        },
+        "linebeam.excludeGlobs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "**/.env",
+            "**/.env.*",
+            "**/*.pem",
+            "**/*.key",
+            "**/*.p12",
+            "**/*.pfx",
+            "**/id_rsa",
+            "**/id_ed25519",
+            "**/.npmrc",
+            "**/.pypirc"
+          ],
+          "description": "Repository-relative glob patterns excluded from capture and model context. Exclusions remain visible in All Changes. This is not a secret scanner."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "watch": "node scripts/build.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "tsc -p tsconfig.test.json && node scripts/test.mjs",
+    "test:integration": "npm run build && tsc -p tsconfig.test.json && node scripts/integration.mjs",
+    "test:package": "tsc -p tsconfig.test.json && node scripts/integration.mjs --vsix",
+    "check": "npm run typecheck && npm test && npm run build",
+    "verify:package": "node scripts/vsix.mjs",
+    "vscode:prepublish": "npm run typecheck && npm run build",
+    "package": "vsce package --pre-release --no-dependencies && npm run verify:package"
+  },
+  "dependencies": {
+    "diff": "^8.0.2",
+    "minimatch": "^10.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.0",
+    "@types/vscode": "1.96.0",
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^4.0.0",
+    "esbuild": "^0.25.0",
+    "linkedom": "^0.18.12",
+    "typescript": "~5.9.3",
+    "yauzl": "^3.4.0"
+  }
+}
